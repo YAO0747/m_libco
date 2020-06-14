@@ -33,7 +33,7 @@ void* Producer(void* args)
 	while(true)
 	{
 		//(在堆上)生产一个资源
-		stTask_t* task = (stTask_t*)calloc(1,sizeof(stTask_t));
+		sTask_t* task = (sTask_t*)calloc(1,sizeof(sTask_t));
 		task->id = id++;
 		//资源放入临界区
 		env->task_queue.push(task);
@@ -49,17 +49,17 @@ void* Consumer(void* args)
 {
 	co_enable_hook_sys();
 	//获取临界区地址
-	stEnv_t* env = (stEnv_t)args;
+	stEnv_t* env = (stEnv_t*)args;
 
 	while(true)
 	{
 		if(env->task_queue.empty())
 		{
-			co_cond_timewait(env->cond,-1);
+			co_cond_timedwait(env->cond,-1);
 			continue;
 		}
 		//从临界区取出资源
-		stTask_t* task = env->task_queue.front();
+		sTask_t* task = env->task_queue.front();
 		env->task_queue.pop();
 		printf("%s:%d consume task %d\n",__func__,__LINE__,task->id);
 		free(task);
@@ -77,7 +77,7 @@ int main()
 	stCoRoutine_t* consumer_routine;
 	//参数:(协程，协程属性，协程函数，协程函数参数)
 	co_create(&consumer_routine, NULL, Consumer, env);
-	co_resume(consumer_rountine);
+	co_resume(consumer_routine);
 
 	//生产者协程
 	stCoRoutine_t* producer_routine;
